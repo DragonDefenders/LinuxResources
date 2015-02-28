@@ -1,0 +1,51 @@
+How to install fail2ban
+Apt-get unstable install fail2ban
+Config file located in /etc/fail2ban/fail2ban.conf
+By default blocks ssh brute force
+Fail2ban log located in var/log/fail2ban.log
+SSH monitor located in /var/log/auth.log
+Iptables definition that will block offending hosts:
+fwchain = INPUT
+fwstart = iptables -N fail2ban-%(__name__)s
+iptables -A fail2ban-%(__name__)s -j RETURN
+iptables -I %(fwchain)s -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+fwend = iptables -D %(fwchain)s -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+iptables -F fail2ban-%(__name__)s
+iptables -X fail2ban-%(__name__)s
+fwcheck = iptables -L %(fwchain)s | grep -q fail2ban-%(__name__)s
+fwban = iptables -I fail2ban-%(__name__)s 1 -s  -j DROP
+fwunban = iptables -D fail2ban-%(__name__)s -s  -j DROP
+
+This will report the attacks in graphical form:
+After installing fail2ban we will replace the /etc/fail2ban/action.d/iptables-multiport.conf with this command: wget -q -O /dev/null www.badips.com/snippets we will remove all miscellaneous info and then replace the existing file
+
+Installing OPSView:
+Nano /etc/apt/sources.list
+Add the line: 
+# Opsview packages
+deb http://downloads.opsview.com/opsview-core/latest/apt squeeze main
+apt-get update
+add the gpg key to the public key database:
+gpg --keyserver subkeys.pgp.net --recv-key 0FC6984B
+gpg --export --armor 0FC6984B | sudo apt-key add -
+apt-get install opsview
+Firstly, copy the Apache configuration file into the appropriate location:
+
+cp /usr/local/nagios/installer/apache_proxy.conf /etc/apache2/sites-available/opsview
+a2ensite opsview
+a2dissite default
+
+Then, edit the Apache configuration file so that the same shared secret is used:
+
+TKTAuthSecret "shared-secret-please-change"
+
+You will also need to install the Apache proxy_html module in order to use this configuration. On Debian, you can install the libapache2-mod-proxy-html package:
+
+apt-get install libapache2-mod-proxy-html
+a2enmod proxy_http
+
+Now Apache can be restarted
+
+/etc/init.d/apache2 force-reload
+To login to opsview go to the ip address of the debian server 
+Login with admin and initial then change the password to set password
